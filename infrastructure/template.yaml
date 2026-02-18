@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Blood Donor Application Deployment on EC2 with SNS
+
+Parameters:
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Existing EC2 Key Pair Name
+
+  ArtifactBucket:
+    Type: String
+    Description: S3 bucket where application JAR is stored
+
+  JarPath:
+    Type: String
+    Description: S3 object key path (example: blood-donor/blood-donor-backend-0.0.1-SNAPSHOT.jar)
+
+  BuildVersion:
+    Type: String
+    Description: Dummy parameter to force stack update
+
+Resources:
+
+  #################################
+  # Security Group
+  #################################
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH and Application Access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  #################################
+  # SNS Topic
+  #################################
+  BloodDonorSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-sns-topic"
+
+  #################################
+  # IAM Role
+  #################################
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        # AmazonSNSFullAccess attached manually
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
+
+  #################################
+  # EC2 Instance
+  #################################
+  AppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}"
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref AppSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Instance"
+        - Key: BuildVersion
+          Value: !Ref BuildVersion
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -eux
+
+          dnf update -y
+          dnf install -y java-17-amazon-corretto awscli
+
+          cd /home/ec2-user
+
+          # Download original JAR (no renaming)
+          aws s3 cp s3://${ArtifactBucket}/${JarPath} .
+
+          chown ec2-user:ec2-user *.jar
+
+          # Run the actual JAR
+          sudo -u ec2-user nohup java -jar *.jar --server.port=8080 > app.log 2>&1 &
+
+Outputs:
+
+  InstancePublicIP:
+    Description: Public IP of EC2 Instance
+    Value: !GetAtt AppInstance.PublicIp
+
+  SnsTopicArn:
+    Description: SNS Topic ARN
+    Value: !Ref BloodDonorSnsTopic
