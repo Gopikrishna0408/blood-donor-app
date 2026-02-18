@@ -17,7 +17,7 @@ Parameters:
 
   JarPath:
     Type: String
-    Description: S3 object key path (example: blood-donor/blood-donor-backend-0.0.1-SNAPSHOT.jar)
+    Description: "S3 object key path (example: blood-donor/blood-donor-backend-0.0.1-SNAPSHOT.jar)"
 
   BuildVersion:
     Type: String
