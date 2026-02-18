@@ -1,2 +1,2 @@
 # blood-donor-app
-booddonorapp
+blooddonorapp
