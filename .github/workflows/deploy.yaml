@@ -60,5 +60,6 @@ jobs:
               InstanceType=t2.micro \
               KeyName=java-cicd-keypair-dev \
               ArtifactBucket=java-cicd-artifacts-dev-123 \
+              JarPath=blood-donor/blood-donor-backend-0.0.1-SNAPSHOT.jar \
               BuildVersion=${{ github.run_number }} \
             --capabilities CAPABILITY_NAMED_IAM
