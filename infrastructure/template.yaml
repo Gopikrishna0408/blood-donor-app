@@ -17,7 +17,7 @@ Parameters:
 
   JarPath:
     Type: String
-    Description: S3 object key path (example: blood-donor/blood-donor-backend-0.0.1-SNAPSHOT.jar)
+    Description: "S3 object key path (example: blood-donor/blood-donor-backend-0.0.1-SNAPSHOT.jar)"
 
   BuildVersion:
     Type: String
@@ -103,12 +103,12 @@ Resources:
           cd /home/ec2-user
 
           # Download original JAR (no renaming)
-          aws s3 cp s3://${ArtifactBucket}/${JarPath} .
+          aws s3 cp s3://${ArtifactBucket}/${JarPath} blood-donor-backend.jar .
 
-          chown ec2-user:ec2-user *.jar
+          chown ec2-user:ec2-user blood-donor-backend.jar
 
           # Run the actual JAR
-          sudo -u ec2-user nohup java -jar *.jar --server.port=8080 > app.log 2>&1 &
+          sudo -u ec2-user nohup java -jar blood-donor-backend.jar --server.port=8080 > app.log 2>&1 &
 
 Outputs:
 
