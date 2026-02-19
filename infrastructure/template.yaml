@@ -39,8 +39,8 @@ Resources:
           CidrIp: 0.0.0.0/0
 
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: 8081
+          ToPort: 8081
           CidrIp: 0.0.0.0/0
 
   #################################
@@ -103,12 +103,12 @@ Resources:
           cd /home/ec2-user
 
           # Download original JAR (no renaming)
-          aws s3 cp s3://${ArtifactBucket}/${JarPath} blood-donor-backend.jar .
+          aws s3 cp s3://${ArtifactBucket}/blood-donor/blood-donor-backend-0.0.1-SNAPSHOT.jar .
 
-          chown ec2-user:ec2-user blood-donor-backend.jar
+          chown ec2-user:ec2-user blood-donor-backend-0.0.1-SNAPSHOT.jar
 
           # Run the actual JAR
-          sudo -u ec2-user nohup java -jar blood-donor-backend.jar --server.port=8080 > app.log 2>&1 &
+          sudo -u ec2-user nohup java -jar blood-donor-backend-0.0.1-SNAPSHOT.jar --server.port=8081 > app.log 2>&1 &
 
 Outputs:
 
